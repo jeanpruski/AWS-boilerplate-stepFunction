@@ -1,0 +1,39 @@
+service: my-step-function
+
+useDotenv: true
+
+plugins:
+  - serverless-step-functions
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: eu-west-3
+
+  environment:
+    ENV_TEST: ${env:ENV_TEST}
+
+functions:
+  init_lambda:
+    handler: lambdas/handler_lambda.init
+    timeout: 30
+  process_lambda:
+    handler: lambdas/handler_lambda.process
+    timeout: 30
+
+stepFunctions:
+  stateMachines:
+    myWorkshopStateMachine:
+      definition:
+        StartAt: initLambda
+        States:
+          initLambda:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [init_lambda, Arn]
+            Next: processLambda
+          processLambda:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [process_lambda, Arn]
+            End: true
